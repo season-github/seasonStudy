@@ -58,7 +58,6 @@ public class BinaryTreeNode {
 
     /**
      * 生成二叉树数据
-     * @param objs
      */
     public void generateData (BinaryTreeNode node, List<BinaryTreeNode> nodeList){
         if (nodeList.size()>2){
