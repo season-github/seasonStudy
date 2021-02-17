@@ -17,11 +17,11 @@ public class VolatileTestD {
         }
         long begin = new Date().getTime();
 
-        while (num < 10000){
+        while (num < 10_000){
             long end = new Date().getTime();
             int aa = (int)(end-begin);
             int a = num; // 这个值是0，主线程的num，未read内存中的数据
-            boolean check = aa > 10000;
+            boolean check = aa > 10_000;
             if (check){
                 System.out.println(a);
                 System.out.println(num);

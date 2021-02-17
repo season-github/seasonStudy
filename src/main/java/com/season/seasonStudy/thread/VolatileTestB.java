@@ -16,7 +16,7 @@ public class VolatileTestB {
             Thread[] threads = new Thread[THREADS_COUNT];
             for (int i = 0; i < THREADS_COUNT; i++){
                 threads[i] = new Thread(()->{
-                    for (int j = 0; j < 10000; j++) {
+                    for (int j = 0; j < 10_000; j++) {
                         synchronized (VolatileTestB.class){
                             increase();
                         }
