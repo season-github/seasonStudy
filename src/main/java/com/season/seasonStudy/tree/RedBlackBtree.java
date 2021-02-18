@@ -5,14 +5,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.omg.CORBA.RepositoryIdHelper;
-
 /**
  * 红黑树
  *
  * @param <E>
  */
-public class RBtree<E> {
+public class RedBlackBtree<E> {
     public static final boolean RED = true;
     public static final boolean BLACK = false;
     //所有叶子节点的左右子支都指向同一个NIL节点,NIL节点的父节点指向null
@@ -22,7 +20,7 @@ public class RBtree<E> {
     private int size = 0;//节点个数
 
     //不带比较器的构造函数
-    public RBtree() {
+    public RedBlackBtree() {
         ROOT = new Node<E>(null, BLACK, null, null, null);
         NIL = new Node<E>(null, BLACK, null, null, null);
         NIL.left = NIL;
@@ -34,7 +32,7 @@ public class RBtree<E> {
     }
 
     //带比较器的构造函数
-    public RBtree(Cmp<? super E> cmp) {
+    public RedBlackBtree(Cmp<? super E> cmp) {
         if (cmp == null) {
             throw new IllegalArgumentException();
         }
@@ -51,7 +49,7 @@ public class RBtree<E> {
     }
 
     public static void main(String[] args) {
-        RBtree<Integer> rbt = new RBtree<Integer>();
+        RedBlackBtree<Integer> rbt = new RedBlackBtree<Integer>();
         rbt.insert(50);
         rbt.insert(25);
         rbt.insert(75);
@@ -103,7 +101,7 @@ public class RBtree<E> {
     /**
      * 左旋/逆时针，参数表示轴节点、支点
      * 实现了右升左降，右边树高降低，左边树高上升
-     * 如果是支点红，不会对树高产生影响 TODO 确认下
+     * 如果是支点红，不会对树高产生影响 TODO 确认下， 存在问题，部分正确
      *
      * @param node
      */
@@ -119,7 +117,7 @@ public class RBtree<E> {
             parent.right = right;
         }
 
-        // 右树的左树，变为支点的左树
+        // 右树的左树，变为支点的右树
         node.right = right.left;
         if (right.left != NIL) {
             right.left.parent = node;
@@ -312,18 +310,24 @@ public class RBtree<E> {
         }
         // 此时已经查找到要被删除的节点
 
-        // 16:57
-        if (X.left != NIL && X.right != NIL) {
-            Node<E> tmp = min(X.right);
-            X.e = tmp.e;
-            X = tmp;
+        /**
+         * 1.无子节点时，删除节点可能为红色或者黑色；
+         * 1.1 如果为红色，直接删除即可，不会影响黑色节点的数量；
+         * 1.2 如果为黑色，则需要进行删除平衡的操作了；
+         * 2.只有一个子节点时，删除节点只能是黑色，其子节点为红色，否则无法满足红黑树的性质了。 此时用删除节点的子节点接到父节点，且将子节点颜色涂黑，保证黑色数量。
+         * 3.有两个子节点时，与二叉搜索树一样，使用后继节点作为替换的删除节点，情形转至为1或2处理。
+         */
+        if (X.left != NIL && X.right != NIL) { // 情况3，2个子节点，寻找后继，改为删除后继进行平衡
+            Node<E> tmp = min(X.right); // 查找当前节点的最小后继，右子树的最小值
+            X.e = tmp.e; // 替换数据
+            X = tmp; // 需要平衡的节点，改为最小后继，此时，最小后继是叶节点
         }
 
         Node<E> P;
         Node<E> B;
 
         P = X.parent;
-        if (X.right != NIL) {
+        if (X.right != NIL) { // 情况2
             if (X == P.left) {
                 P.left = X.right;
             } else {
@@ -333,7 +337,7 @@ public class RBtree<E> {
             X.color = BLACK;
             ROOT.right.color = BLACK;
             return true;
-        } else if (X.left != NIL) {
+        } else if (X.left != NIL) { // 情况2
             if (X == P.left) {
                 P.left = X.left;
             } else {
@@ -343,31 +347,41 @@ public class RBtree<E> {
             X.color = BLACK;
             ROOT.right.color = BLACK;
             return true;
-        } else {
-            if (X == P.left) {
+        } else { // 情况1
+            if (X == P.left) { // 进行删除
                 P.left = NIL;
             } else {
                 P.right = NIL;
             }
-
-            if (X.isRead()) {
+            if (X.isRead()) { // 当前红节点，直接删除，收工
                 ROOT.right.color = BLACK;
                 return true;
-            } else {
+            } else { // 删除节点为黑节点，删除，然后进行平衡
                 X = NIL;
             }
         }
 
-        //要删除的是叶子节点
+        //要删除的是叶子节点，且叶子节点为黑
         //四中情况调整
         while (true) {
-            if (X == P.left) {
+            if (X == P.left) { // 找到兄弟节点
                 B = P.right;
             } else {
                 B = P.left;
             }
 
-            if (!B.isRead()) {//黑兄
+            if(B.isRead()){ // 红兄，变换一下红黑树的形状，继续判断，转换成黑兄，此时为红父，再进行一次旋转就能平衡
+                if (B == P.right) { // 右子树左旋
+                    antiClockwiseRotate(P);
+                } else { // 左子树右旋
+                    clockwiseRotate(P);
+                }
+                B.color = BLACK; // 颜色替换
+                P.color = RED;
+                //X节点的P节点没有发生变化，但兄弟节点发生变化
+            }
+
+            if (!B.isRead()) { // 黑兄
                 Node<E> BL = B.left;//左侄子
                 Node<E> BR = B.right;//右侄子
                 if (B.left.isRead() || B.right.isRead()) {//红侄
@@ -397,26 +411,17 @@ public class RBtree<E> {
                         }
                     }
                     break;//不需要继续向上回溯
-                } else {
-                    if (P.isRead()) {//黑侄红父
+                } else { // 侄全黑
+                    if (P.isRead()) {//黑侄红父，父红->黑，兄黑->红，平衡
                         P.color = BLACK;
                         B.color = RED;
                         break;//不需要继续向上回溯
-                    } else {//黑侄黑父,继续向上回溯
+                    } else {//黑侄黑父,继续向上回溯，兄红，部分平衡，以父为平衡点找平衡，未旋转
                         B.color = RED;
                         X = P;
                         P = X.parent;
                     }
                 }
-            } else {//红兄，变换一下红黑树的形状，继续判断
-                if (B == P.right) {
-                    antiClockwiseRotate(P);
-                } else {
-                    clockwiseRotate(P);
-                }
-                B.color = BLACK;
-                P.color = RED;
-                //X节点的P节点没有发生变化，但兄弟节点发生变化
             }
         }
         size--; //一定可以删除一个节点
