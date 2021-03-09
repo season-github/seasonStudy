@@ -1,5 +1,7 @@
 package com.season.seasonStudy;
 
+import com.season.seasonStudy.hashmap.SeasonHashMap;
+import com.season.seasonStudy.pattern.iterator.ArrayList;
 import com.season.seasonStudy.test.Demo;
 
 import java.util.*;
@@ -8,38 +10,38 @@ import java.util.*;
  * 临时测试时使用
  */
 public class SeasonTest {
-    
-    private static List<Integer> badList = new ArrayList<>();
-    private static List<Integer> betterList = new ArrayList<>();
 
-    
-    
     public static void main(String[] args) {
-        HashMap<Integer, Integer> hashMap = new HashMap<>();
-        hashMap.put(1,2);
-        hashMap.put(2,3);
+        SeasonHashMap<Integer,Integer> map = new SeasonHashMap<>();
+        map.put(1, 11);
+        map.put(2, 22);
+        Set<Integer> keys = map.keySet();
+        keys.size();
+        System.out.println(map.keySet().size());
+        map.put(3, 33);
+        System.out.println(map.keySet().size());
+        System.out.println(map.keySet());
 
-        generateData(); // 生成hash值
-        System.out.println(new HashSet<Integer>(badList).size());
-        System.out.println(new HashSet<Integer>(betterList).size());
     }
 
-    private static void generateData(){
-        int length = (int)Math.pow(2, 12);
-        for (int i = 0; i < length; i++) {
-            int hash = new Demo().hashCode();
-            badList.add(hash & (length-1));
-            betterList.add((hash ^ (hash >>>16)) & (length-1));
-        }
+    private static void testMap(){
+        HashMap<Integer,Integer> map = new HashMap<>();
+        map.put(1, 11);
+        map.put(2, 22);
+        map.put(3, 33);
+
+        Spliterator<Map.Entry<Integer, Integer>> spliterator = map.entrySet().spliterator();
+
+
     }
-    
-    private static void swap(int a, int b){
-        System.out.println(a+"\t"+b);
-        a = a^b;
-        b = a^b;
-        a = a^b;
-        System.out.println(a+"\t"+b);
-        System.out.println("----------------");
+    private static void testList(){
+        ArrayList<Integer> list = new ArrayList<>();
+        list.add(11);
+        list.add(22);
+        list.add(33);
+
+        Spliterator<Integer> spliterator = list.spliterator();
+
     }
 
 }

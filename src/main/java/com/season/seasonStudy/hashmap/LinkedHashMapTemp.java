@@ -280,11 +280,11 @@ import java.util.function.Consumer;
 
         void afterNodeAccess(SeasonHashMap.Node<K,V> e) { // move node to last
             Entry<K,V> last;
-            if (accessOrder && (last = tail) != e) {
+            if (accessOrder && (last = tail) != e) { // accessOrder，访问顺序，当前节点被访问了，需要放在最后面，维护节点的访问顺序
                 Entry<K,V> p =
                         (Entry<K,V>)e, b = p.before, a = p.after;
                 p.after = null;
-                if (b == null)
+                if (b == null) // 将当前p移出
                     head = a;
                 else
                     b.after = a;

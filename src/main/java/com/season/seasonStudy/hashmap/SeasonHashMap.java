@@ -209,6 +209,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
     /**
      * The default initial capacity - MUST be a power of two.
      */
+    // season: 默认容量是16
     static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
 
     /**
@@ -216,6 +217,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * by either of the constructors with arguments.
      * MUST be a power of two <= 1<<30.
      */
+    // season: 最大的容量是2的30次方
     static final int MAXIMUM_CAPACITY = 1 << 30;
 
     /**
@@ -246,6 +248,8 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * Should be at least 4 * TREEIFY_THRESHOLD to avoid conflicts
      * between resizing and treeification thresholds.
      */
+    // season: 搞不懂为什么是64，而不是32。另外，这里指的冲突到底是什么？
+    // season: 8*4==32，此时>32*0.75需要扩容，扩容后是64
     static final int MIN_TREEIFY_CAPACITY = 64;
 
     /**
@@ -256,7 +260,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         final int hash;
         final K key;
         V value;
-        Node<K,V> next;
+        Node<K,V> next; // 当多个元素存在相同的后几位hash值时，需要将数据存储为链表。jdk8，增加了红黑树的数据格式
 
         Node(int hash, K key, V value, Node<K,V> next) {
             this.hash = hash;
@@ -269,6 +273,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         public final V getValue()      { return value; }
         public final String toString() { return key + "=" + value; }
 
+        // season: 节点 node 的 hashcode，是 key 与 value 的 hashcode 的异或结果
         public final int hashCode() {
             return Objects.hashCode(key) ^ Objects.hashCode(value);
         }
@@ -310,6 +315,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * to incorporate impact of the highest bits that would otherwise
      * never be used in index calculations because of table bounds.
      */
+    // 因为高16位基本用不到，所以将高16位与32位hashcode进行异或处理(XORs)，使数据更加随机
     static final int hash(Object key) {
         int h;
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
@@ -319,6 +325,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * Returns x's Class if it is of the form "class C implements
      * Comparable<C>", else null.
      */
+    // 获取泛型类
     static Class<?> comparableClassFor(Object x) {
         if (x instanceof Comparable) {
             Class<?> c; Type[] ts, as; Type t; ParameterizedType p;
@@ -351,6 +358,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
     /**
      * Returns a power of two size for the given target capacity.
      */
+    // season: 返回离着最近的大的2的倍数
     static final int tableSizeFor(int cap) {
         int n = cap - 1;
         n |= n >>> 1;
@@ -358,7 +366,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         n |= n >>> 4;
         n |= n >>> 8;
         n |= n >>> 16;
-        return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+        return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1; // <0 返回1 / 最大容量 / 2的倍数
     }
 
     /* ---------------- Fields -------------- */
@@ -370,6 +378,13 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * bootstrapping mechanics that are currently not needed.)
      */
     transient Node<K,V>[] table;
+
+    /**
+     * 获取 table
+     */
+    public Node<K,V>[] getTable(){
+        return table;
+    }
 
     /**
      * Holds cached entrySet(). Note that AbstractMap fields are used
@@ -403,6 +418,13 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
     int threshold;
 
     /**
+     * 自己添加，为了查看threshold
+     */
+    public int getThreshold(){
+        return threshold;
+    }
+
+    /**
      * The load factor for the hash table.
      *
      * @serial
@@ -430,7 +452,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             throw new IllegalArgumentException("Illegal load factor: " +
                     loadFactor);
         this.loadFactor = loadFactor;
-        this.threshold = tableSizeFor(initialCapacity);
+        this.threshold = tableSizeFor(initialCapacity); // 生成2的倍数的容量，但是这个threshold，在插入数据时会发生改变，需要乘以加载因子
     }
 
     /**
@@ -476,16 +498,16 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
     final void putMapEntries(Map<? extends K, ? extends V> m, boolean evict) {
         int s = m.size();
         if (s > 0) {
-            if (table == null) { // pre-size
-                float ft = ((float)s / loadFactor) + 1.0F;
+            if (table == null) { // pre-size // 初始化
+                float ft = ((float)s / loadFactor) + 1.0F; // eg. 24，此时已经扩容，ft==33，此时的capacity==64
                 int t = ((ft < (float)MAXIMUM_CAPACITY) ?
                         (int)ft : MAXIMUM_CAPACITY);
-                if (t > threshold)
+                if (t > threshold) // 低于threshold，不进行扩容
                     threshold = tableSizeFor(t);
             }
             else if (s > threshold)
-                resize();
-            for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) {
+                resize(); // 扩容
+            for (Map.Entry<? extends K, ? extends V> e : m.entrySet()) { // 遍历插入数据
                 K key = e.getKey();
                 V value = e.getValue();
                 putVal(hash(key), key, value, false, evict);
@@ -548,8 +570,8 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                     ((k = first.key) == key || (key != null && key.equals(k))))
                 return first;
             if ((e = first.next) != null) {
-                if (first instanceof SeasonHashMap.TreeNode)
-                    return ((SeasonHashMap.TreeNode<K,V>)first).getTreeNode(hash, key);
+                if (first instanceof TreeNode)
+                    return ((TreeNode<K,V>)first).getTreeNode(hash, key);
                 do {
                     if (e.hash == hash &&
                             ((k = e.key) == key || (key != null && key.equals(k))))
@@ -585,7 +607,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public V put(K key, V value) {
-        return putVal(hash(key), key, value, false, true);
+        return putVal(hash(key), key, value, false, true); // evict，驱逐、删除，删除之前的数据重新插入
     }
 
     /**
@@ -594,48 +616,49 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * @param hash hash for key
      * @param key the key
      * @param value the value to put
-     * @param onlyIfAbsent if true, don't change existing value
+     * @param onlyIfAbsent if true, don't change existing value // 只有在缺失/少数据时允许
      * @param evict if false, the table is in creation mode.
      * @return previous value, or null if none
      */
     final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
             boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
-        if ((tab = table) == null || (n = tab.length) == 0)
-            n = (tab = resize()).length;
+        if ((tab = table) == null || (n = tab.length) == 0) // 获取 capacity
+            n = (tab = resize()).length; // 保证有数据
         if ((p = tab[i = (n - 1) & hash]) == null)
-            tab[i] = newNode(hash, key, value, null);
+            tab[i] = newNode(hash, key, value, null); // 索引上没有元素，直接插入
         else {
+            // 寻找节点
             Node<K,V> e; K k;
             if (p.hash == hash &&
                     ((k = p.key) == key || (key != null && key.equals(k))))
                 e = p;
-            else if (p instanceof SeasonHashMap.TreeNode)
-                e = ((SeasonHashMap.TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            else if (p instanceof TreeNode)
+                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
             else {
                 for (int binCount = 0; ; ++binCount) {
-                    if ((e = p.next) == null) {
+                    if ((e = p.next) == null) { // 最后一个节点，新创建节点，此时e无数据，不需要执行替换操作
                         p.next = newNode(hash, key, value, null);
                         if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
                             treeifyBin(tab, hash);
                         break;
                     }
                     if (e.hash == hash &&
-                            ((k = e.key) == key || (key != null && key.equals(k))))
+                            ((k = e.key) == key || (key != null && key.equals(k)))) // 判断循环中的节点
                         break;
                     p = e;
                 }
             }
             if (e != null) { // existing mapping for key
                 V oldValue = e.value;
-                if (!onlyIfAbsent || oldValue == null)
+                if (!onlyIfAbsent || oldValue == null) // 非添加模式/替换模式，无原始值，替换数据，然后返回原始数据
                     e.value = value;
                 afterNodeAccess(e);
                 return oldValue;
             }
         }
         ++modCount;
-        if (++size > threshold)
+        if (++size > threshold) // 先插入数据，最后视情况扩容
             resize();
         afterNodeInsertion(evict);
         return null;
@@ -655,10 +678,12 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         int oldCap = (oldTab == null) ? 0 : oldTab.length;
         int oldThr = threshold;
         int newCap, newThr = 0;
+
+        // 判断容量、阈值大小
         if (oldCap > 0) {
             if (oldCap >= MAXIMUM_CAPACITY) {
-                threshold = Integer.MAX_VALUE;
-                return oldTab;
+                threshold = Integer.MAX_VALUE; // 数组是用int存储的，所以最大的阈值、大小，就是int的大小
+                return oldTab; // 太大不进行后续扩容
             }
             else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
                     oldCap >= DEFAULT_INITIAL_CAPACITY)
@@ -670,6 +695,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             newCap = DEFAULT_INITIAL_CAPACITY;
             newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
         }
+
         if (newThr == 0) {
             float ft = (float)newCap * loadFactor;
             newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
@@ -679,22 +705,22 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         @SuppressWarnings({"rawtypes","unchecked"})
         Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
         table = newTab;
-        if (oldTab != null) {
-            for (int j = 0; j < oldCap; ++j) {
+        if (oldTab != null) { // 2021-02-21 12:23:22
+            for (int j = 0; j < oldCap; ++j) { // 对数组进行循环，
                 Node<K,V> e;
                 if ((e = oldTab[j]) != null) {
-                    oldTab[j] = null;
-                    if (e.next == null)
-                        newTab[e.hash & (newCap - 1)] = e;
-                    else if (e instanceof SeasonHashMap.TreeNode)
-                        ((SeasonHashMap.TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+                    oldTab[j] = null; // 置空，元素在e中，也用来标记已经处理
+                    if (e.next == null) // 单元素，直接替换
+                        newTab[e.hash & (newCap - 1)] = e; // 重新计算下标&存储
+                    else if (e instanceof TreeNode) // 红黑树存储，对元素进行修正
+                        ((TreeNode<K,V>)e).split(this, newTab, j, oldCap); // season: 难道不害怕出现2个树合并，或者树的拆分吗
                     else { // preserve order
-                        Node<K,V> loHead = null, loTail = null;
+                        Node<K,V> loHead = null, loTail = null; // 拆分为2部分
                         Node<K,V> hiHead = null, hiTail = null;
                         Node<K,V> next;
                         do {
                             next = e.next;
-                            if ((e.hash & oldCap) == 0) {
+                            if ((e.hash & oldCap) == 0) { // 查看进一位的hash，如果是增量，可以拆成2部分
                                 if (loTail == null)
                                     loHead = e;
                                 else
@@ -713,7 +739,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                             loTail.next = null;
                             newTab[j] = loHead;
                         }
-                        if (hiTail != null) {
+                        if (hiTail != null) { // 保存拆分出来新的链表
                             hiTail.next = null;
                             newTab[j + oldCap] = hiHead;
                         }
@@ -733,9 +759,9 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         if (tab == null || (n = tab.length) < MIN_TREEIFY_CAPACITY)
             resize();
         else if ((e = tab[index = (n - 1) & hash]) != null) {
-            SeasonHashMap.TreeNode<K,V> hd = null, tl = null;
+            TreeNode<K,V> hd = null, tl = null; // head tail
             do {
-                SeasonHashMap.TreeNode<K,V> p = replacementTreeNode(e, null);
+                TreeNode<K,V> p = replacementTreeNode(e, null); // 改变数据类型变成TreeNode
                 if (tl == null)
                     hd = p;
                 else {
@@ -790,14 +816,14 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             boolean matchValue, boolean movable) {
         Node<K,V>[] tab; Node<K,V> p; int n, index;
         if ((tab = table) != null && (n = tab.length) > 0 &&
-                (p = tab[index = (n - 1) & hash]) != null) {
+                (p = tab[index = (n - 1) & hash]) != null) { // 有这个值
             Node<K,V> node = null, e; K k; V v;
             if (p.hash == hash &&
-                    ((k = p.key) == key || (key != null && key.equals(k))))
+                    ((k = p.key) == key || (key != null && key.equals(k)))) // 先进行hash判断，效率更高
                 node = p;
-            else if ((e = p.next) != null) {
-                if (p instanceof SeasonHashMap.TreeNode)
-                    node = ((SeasonHashMap.TreeNode<K,V>)p).getTreeNode(hash, key);
+            else if ((e = p.next) != null) { // 查找下一个元素
+                if (p instanceof TreeNode)
+                    node = ((TreeNode<K,V>)p).getTreeNode(hash, key);
                 else {
                     do {
                         if (e.hash == hash &&
@@ -811,12 +837,12 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                 }
             }
             if (node != null && (!matchValue || (v = node.value) == value ||
-                    (value != null && value.equals(v)))) {
-                if (node instanceof SeasonHashMap.TreeNode)
-                    ((SeasonHashMap.TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
-                else if (node == p)
+                    (value != null && value.equals(v)))) { // season: node找到，且不比较value，或value相同
+                if (node instanceof TreeNode)
+                    ((TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
+                else if (node == p) // p == node，第一个值
                     tab[index] = node.next;
-                else
+                else // 中间值，p是node的前序，把node去除掉
                     p.next = node.next;
                 ++modCount;
                 --size;
@@ -831,10 +857,10 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * Removes all of the mappings from this map.
      * The map will be empty after this call returns.
      */
-    public void clear() {
+    public void clear() { // 不缩小table的大小
         Node<K,V>[] tab;
-        modCount++;
-        if ((tab = table) != null && size > 0) {
+        modCount++; // season: 为啥不是--呢
+        if ((tab = table) != null && size > 0) { // 遍历赋值null
             size = 0;
             for (int i = 0; i < tab.length; ++i)
                 tab[i] = null;
@@ -849,7 +875,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * @return <tt>true</tt> if this map maps one or more keys to the
      *         specified value
      */
-    public boolean containsValue(Object value) {
+    public boolean containsValue(Object value) { // 遍历的时候，链表模式遍历
         Node<K,V>[] tab; V v;
         if ((tab = table) != null && size > 0) {
             for (int i = 0; i < tab.length; ++i) {
@@ -878,7 +904,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      *
      * @return a set view of the keys contained in this map
      */
-    public Set<K> keySet() {
+    public Set<K> keySet() {  // 只有在删除的时候维护，但是添加不维护，添加不维护吗
         Set<K> ks = keySet;
         if (ks == null) {
             ks = new SeasonHashMap.KeySet();
@@ -890,8 +916,10 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
     final class KeySet extends java.util.AbstractSet<K> {
         public final int size()                 { return size; }
         public final void clear()               { SeasonHashMap.this.clear(); }
-        public final Iterator<K> iterator()     { return new SeasonHashMap.KeyIterator(); }
-        public final boolean contains(Object o) { return containsKey(o); }
+        public final Iterator<K> iterator()     {
+            return new SeasonHashMap.KeyIterator();
+        }
+        public final boolean contains(Object o) { return containsKey(o); } // 搞不懂为什么不用set的contains。其实hashset的contains的实现就是用了hashmap
         public final boolean remove(Object key) {
             return removeNode(hash(key), key, null, false, true) != null;
         }
@@ -1075,14 +1103,14 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         int hash = hash(key);
         Node<K,V>[] tab; Node<K,V> first; int n, i;
         int binCount = 0;
-        SeasonHashMap.TreeNode<K,V> t = null;
+        TreeNode<K,V> t = null;
         Node<K,V> old = null;
         if (size > threshold || (tab = table) == null ||
                 (n = tab.length) == 0)
             n = (tab = resize()).length;
         if ((first = tab[i = (n - 1) & hash]) != null) {
-            if (first instanceof SeasonHashMap.TreeNode)
-                old = (t = (SeasonHashMap.TreeNode<K,V>)first).getTreeNode(hash, key);
+            if (first instanceof TreeNode)
+                old = (t = (TreeNode<K,V>)first).getTreeNode(hash, key);
             else {
                 Node<K,V> e = first; K k;
                 do {
@@ -1149,14 +1177,14 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         int hash = hash(key);
         Node<K,V>[] tab; Node<K,V> first; int n, i;
         int binCount = 0;
-        SeasonHashMap.TreeNode<K,V> t = null;
+        TreeNode<K,V> t = null;
         Node<K,V> old = null;
         if (size > threshold || (tab = table) == null ||
                 (n = tab.length) == 0)
             n = (tab = resize()).length;
         if ((first = tab[i = (n - 1) & hash]) != null) {
-            if (first instanceof SeasonHashMap.TreeNode)
-                old = (t = (SeasonHashMap.TreeNode<K,V>)first).getTreeNode(hash, key);
+            if (first instanceof TreeNode)
+                old = (t = (TreeNode<K,V>)first).getTreeNode(hash, key);
             else {
                 Node<K,V> e = first; K k;
                 do {
@@ -1204,14 +1232,14 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         int hash = hash(key);
         Node<K,V>[] tab; Node<K,V> first; int n, i;
         int binCount = 0;
-        SeasonHashMap.TreeNode<K,V> t = null;
+        TreeNode<K,V> t = null;
         Node<K,V> old = null;
         if (size > threshold || (tab = table) == null ||
                 (n = tab.length) == 0)
             n = (tab = resize()).length;
         if ((first = tab[i = (n - 1) & hash]) != null) {
-            if (first instanceof SeasonHashMap.TreeNode)
-                old = (t = (SeasonHashMap.TreeNode<K,V>)first).getTreeNode(hash, key);
+            if (first instanceof TreeNode)
+                old = (t = (TreeNode<K,V>)first).getTreeNode(hash, key);
             else {
                 Node<K,V> e = first; K k;
                 do {
@@ -1742,13 +1770,13 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
     }
 
     // Create a tree bin node
-    SeasonHashMap.TreeNode<K,V> newTreeNode(int hash, K key, V value, Node<K,V> next) {
-        return new SeasonHashMap.TreeNode<>(hash, key, value, next);
+    TreeNode<K,V> newTreeNode(int hash, K key, V value, Node<K,V> next) {
+        return new TreeNode<>(hash, key, value, next);
     }
 
     // For treeifyBin
-    SeasonHashMap.TreeNode<K,V> replacementTreeNode(Node<K,V> p, Node<K,V> next) {
-        return new SeasonHashMap.TreeNode<>(p.hash, p.key, p.value, next);
+    TreeNode<K,V> replacementTreeNode(Node<K,V> p, Node<K,V> next) {
+        return new TreeNode<>(p.hash, p.key, p.value, next);
     }
 
     /**
@@ -1791,10 +1819,10 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
      * linked node.
      */
     static final class TreeNode<K,V> extends LinkedHashMapTemp.Entry<K,V> {
-        SeasonHashMap.TreeNode<K,V> parent;  // red-black tree links
-        SeasonHashMap.TreeNode<K,V> left;
-        SeasonHashMap.TreeNode<K,V> right;
-        SeasonHashMap.TreeNode<K,V> prev;    // needed to unlink next upon deletion
+        TreeNode<K,V> parent;  // red-black tree links
+        TreeNode<K,V> left;
+        TreeNode<K,V> right;
+        TreeNode<K,V> prev;    // needed to unlink next upon deletion
         boolean red;
         TreeNode(int hash, K key, V val, Node<K,V> next) {
             super(hash, key, val, next);
@@ -1803,8 +1831,8 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         /**
          * Returns root of tree containing this node.
          */
-        final SeasonHashMap.TreeNode<K,V> root() {
-            for (SeasonHashMap.TreeNode<K,V> r = this, p;;) {
+        final TreeNode<K,V> root() {
+            for (TreeNode<K,V> r = this, p;;) {
                 if ((p = r.parent) == null)
                     return r;
                 r = p;
@@ -1814,17 +1842,17 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         /**
          * Ensures that the given root is the first node of its bin.
          */
-        static <K,V> void moveRootToFront(Node<K,V>[] tab, SeasonHashMap.TreeNode<K,V> root) {
+        static <K,V> void moveRootToFront(Node<K,V>[] tab, TreeNode<K,V> root) {
             int n;
             if (root != null && tab != null && (n = tab.length) > 0) {
                 int index = (n - 1) & root.hash;
-                SeasonHashMap.TreeNode<K,V> first = (SeasonHashMap.TreeNode<K,V>)tab[index];
+                TreeNode<K,V> first = (TreeNode<K,V>)tab[index];
                 if (root != first) {
                     Node<K,V> rn;
                     tab[index] = root;
-                    SeasonHashMap.TreeNode<K,V> rp = root.prev;
+                    TreeNode<K,V> rp = root.prev;
                     if ((rn = root.next) != null)
-                        ((SeasonHashMap.TreeNode<K,V>)rn).prev = rp;
+                        ((TreeNode<K,V>)rn).prev = rp;
                     if (rp != null)
                         rp.next = rn;
                     if (first != null)
@@ -1841,11 +1869,11 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
          * The kc argument caches comparableClassFor(key) upon first use
          * comparing keys.
          */
-        final SeasonHashMap.TreeNode<K,V> find(int h, Object k, Class<?> kc) {
-            SeasonHashMap.TreeNode<K,V> p = this;
+        final TreeNode<K,V> find(int h, Object k, Class<?> kc) {
+            TreeNode<K,V> p = this;
             do {
                 int ph, dir; K pk;
-                SeasonHashMap.TreeNode<K,V> pl = p.left, pr = p.right, q;
+                TreeNode<K,V> pl = p.left, pr = p.right, q;
                 if ((ph = p.hash) > h)
                     p = pl;
                 else if (ph < h)
@@ -1871,7 +1899,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         /**
          * Calls find for root node.
          */
-        final SeasonHashMap.TreeNode<K,V> getTreeNode(int h, Object k) {
+        final TreeNode<K,V> getTreeNode(int h, Object k) {
             return ((parent != null) ? root() : this).find(h, k, null);
         }
 
@@ -1897,9 +1925,9 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
          * @return root of tree
          */
         final void treeify(Node<K,V>[] tab) {
-            SeasonHashMap.TreeNode<K,V> root = null;
-            for (SeasonHashMap.TreeNode<K,V> x = this, next; x != null; x = next) {
-                next = (SeasonHashMap.TreeNode<K,V>)x.next;
+            TreeNode<K,V> root = null;
+            for (TreeNode<K,V> x = this, next; x != null; x = next) {
+                next = (TreeNode<K,V>)x.next;
                 x.left = x.right = null;
                 if (root == null) {
                     x.parent = null;
@@ -1910,7 +1938,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                     K k = x.key;
                     int h = x.hash;
                     Class<?> kc = null;
-                    for (SeasonHashMap.TreeNode<K,V> p = root;;) {
+                    for (TreeNode<K,V> p = root;;) {
                         int dir, ph;
                         K pk = p.key;
                         if ((ph = p.hash) > h)
@@ -1922,7 +1950,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                                 (dir = compareComparables(kc, k, pk)) == 0)
                             dir = tieBreakOrder(k, pk);
 
-                        SeasonHashMap.TreeNode<K,V> xp = p;
+                        TreeNode<K,V> xp = p;
                         if ((p = (dir <= 0) ? p.left : p.right) == null) {
                             x.parent = xp;
                             if (dir <= 0)
@@ -1958,12 +1986,12 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         /**
          * Tree version of putVal.
          */
-        final SeasonHashMap.TreeNode<K,V> putTreeVal(SeasonHashMap<K,V> map, Node<K,V>[] tab,
+        final TreeNode<K,V> putTreeVal(SeasonHashMap<K,V> map, Node<K,V>[] tab,
                                                      int h, K k, V v) {
             Class<?> kc = null;
             boolean searched = false;
-            SeasonHashMap.TreeNode<K,V> root = (parent != null) ? root() : this;
-            for (SeasonHashMap.TreeNode<K,V> p = root;;) {
+            TreeNode<K,V> root = (parent != null) ? root() : this;
+            for (TreeNode<K,V> p = root;;) {
                 int dir, ph; K pk;
                 if ((ph = p.hash) > h)
                     dir = -1;
@@ -1975,7 +2003,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                         (kc = comparableClassFor(k)) == null) ||
                         (dir = compareComparables(kc, k, pk)) == 0) {
                     if (!searched) {
-                        SeasonHashMap.TreeNode<K,V> q, ch;
+                        TreeNode<K,V> q, ch;
                         searched = true;
                         if (((ch = p.left) != null &&
                                 (q = ch.find(h, k, kc)) != null) ||
@@ -1986,10 +2014,10 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                     dir = tieBreakOrder(k, pk);
                 }
 
-                SeasonHashMap.TreeNode<K,V> xp = p;
+                TreeNode<K,V> xp = p;
                 if ((p = (dir <= 0) ? p.left : p.right) == null) {
                     Node<K,V> xpn = xp.next;
-                    SeasonHashMap.TreeNode<K,V> x = map.newTreeNode(h, k, v, xpn);
+                    TreeNode<K,V> x = map.newTreeNode(h, k, v, xpn);
                     if (dir <= 0)
                         xp.left = x;
                     else
@@ -1997,7 +2025,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                     xp.next = x;
                     x.parent = x.prev = xp;
                     if (xpn != null)
-                        ((SeasonHashMap.TreeNode<K,V>)xpn).prev = x;
+                        ((TreeNode<K,V>)xpn).prev = x;
                     moveRootToFront(tab, balanceInsertion(root, x));
                     return null;
                 }
@@ -2020,8 +2048,8 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             if (tab == null || (n = tab.length) == 0)
                 return;
             int index = (n - 1) & hash;
-            SeasonHashMap.TreeNode<K,V> first = (SeasonHashMap.TreeNode<K,V>)tab[index], root = first, rl;
-            SeasonHashMap.TreeNode<K,V> succ = (SeasonHashMap.TreeNode<K,V>)next, pred = prev;
+            TreeNode<K,V> first = (TreeNode<K,V>)tab[index], root = first, rl;
+            TreeNode<K,V> succ = (TreeNode<K,V>)next, pred = prev;
             if (pred == null)
                 tab[index] = first = succ;
             else
@@ -2037,20 +2065,20 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                 tab[index] = first.untreeify(map);  // too small
                 return;
             }
-            SeasonHashMap.TreeNode<K,V> p = this, pl = left, pr = right, replacement;
+            TreeNode<K,V> p = this, pl = left, pr = right, replacement;
             if (pl != null && pr != null) {
-                SeasonHashMap.TreeNode<K,V> s = pr, sl;
+                TreeNode<K,V> s = pr, sl;
                 while ((sl = s.left) != null) // find successor
                     s = sl;
                 boolean c = s.red; s.red = p.red; p.red = c; // swap colors
-                SeasonHashMap.TreeNode<K,V> sr = s.right;
-                SeasonHashMap.TreeNode<K,V> pp = p.parent;
+                TreeNode<K,V> sr = s.right;
+                TreeNode<K,V> pp = p.parent;
                 if (s == pr) { // p was s's direct parent
                     p.parent = s;
                     s.right = p;
                 }
                 else {
-                    SeasonHashMap.TreeNode<K,V> sp = s.parent;
+                    TreeNode<K,V> sp = s.parent;
                     if ((p.parent = sp) != null) {
                         if (s == sp.left)
                             sp.left = p;
@@ -2083,7 +2111,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             else
                 replacement = p;
             if (replacement != p) {
-                SeasonHashMap.TreeNode<K,V> pp = replacement.parent = p.parent;
+                TreeNode<K,V> pp = replacement.parent = p.parent;
                 if (pp == null)
                     root = replacement;
                 else if (p == pp.left)
@@ -2093,10 +2121,10 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                 p.left = p.right = p.parent = null;
             }
 
-            SeasonHashMap.TreeNode<K,V> r = p.red ? root : balanceDeletion(root, replacement);
+            TreeNode<K,V> r = p.red ? root : balanceDeletion(root, replacement);
 
             if (replacement == p) {  // detach
-                SeasonHashMap.TreeNode<K,V> pp = p.parent;
+                TreeNode<K,V> pp = p.parent;
                 p.parent = null;
                 if (pp != null) {
                     if (p == pp.left)
@@ -2120,13 +2148,13 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
          * @param bit the bit of hash to split on
          */
         final void split(SeasonHashMap<K,V> map, Node<K,V>[] tab, int index, int bit) {
-            SeasonHashMap.TreeNode<K,V> b = this;
+            TreeNode<K,V> b = this;
             // Relink into lo and hi lists, preserving order
-            SeasonHashMap.TreeNode<K,V> loHead = null, loTail = null;
-            SeasonHashMap.TreeNode<K,V> hiHead = null, hiTail = null;
+            TreeNode<K,V> loHead = null, loTail = null;
+            TreeNode<K,V> hiHead = null, hiTail = null;
             int lc = 0, hc = 0;
-            for (SeasonHashMap.TreeNode<K,V> e = b, next; e != null; e = next) {
-                next = (SeasonHashMap.TreeNode<K,V>)e.next;
+            for (TreeNode<K,V> e = b, next; e != null; e = next) {
+                next = (TreeNode<K,V>)e.next;
                 e.next = null;
                 if ((e.hash & bit) == 0) {
                     if ((e.prev = loTail) == null)
@@ -2169,9 +2197,9 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         /* ------------------------------------------------------------ */
         // Red-black tree methods, all adapted from CLR
 
-        static <K,V> SeasonHashMap.TreeNode<K,V> rotateLeft(SeasonHashMap.TreeNode<K,V> root,
-                                                            SeasonHashMap.TreeNode<K,V> p) {
-            SeasonHashMap.TreeNode<K,V> r, pp, rl;
+        static <K,V> TreeNode<K,V> rotateLeft(TreeNode<K,V> root,
+                                                            TreeNode<K,V> p) {
+            TreeNode<K,V> r, pp, rl;
             if (p != null && (r = p.right) != null) {
                 if ((rl = p.right = r.left) != null)
                     rl.parent = p;
@@ -2187,9 +2215,9 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             return root;
         }
 
-        static <K,V> SeasonHashMap.TreeNode<K,V> rotateRight(SeasonHashMap.TreeNode<K,V> root,
-                                                             SeasonHashMap.TreeNode<K,V> p) {
-            SeasonHashMap.TreeNode<K,V> l, pp, lr;
+        static <K,V> TreeNode<K,V> rotateRight(TreeNode<K,V> root,
+                                                             TreeNode<K,V> p) {
+            TreeNode<K,V> l, pp, lr;
             if (p != null && (l = p.left) != null) {
                 if ((lr = p.left = l.right) != null)
                     lr.parent = p;
@@ -2205,10 +2233,10 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             return root;
         }
 
-        static <K,V> SeasonHashMap.TreeNode<K,V> balanceInsertion(SeasonHashMap.TreeNode<K,V> root,
-                                                                  SeasonHashMap.TreeNode<K,V> x) {
+        static <K,V> TreeNode<K,V> balanceInsertion(TreeNode<K,V> root,
+                                                                  TreeNode<K,V> x) {
             x.red = true;
-            for (SeasonHashMap.TreeNode<K,V> xp, xpp, xppl, xppr;;) {
+            for (TreeNode<K,V> xp, xpp, xppl, xppr;;) {
                 if ((xp = x.parent) == null) {
                     x.red = false;
                     return x;
@@ -2260,9 +2288,9 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
             }
         }
 
-        static <K,V> SeasonHashMap.TreeNode<K,V> balanceDeletion(SeasonHashMap.TreeNode<K,V> root,
-                                                                 SeasonHashMap.TreeNode<K,V> x) {
-            for (SeasonHashMap.TreeNode<K,V> xp, xpl, xpr;;)  {
+        static <K,V> TreeNode<K,V> balanceDeletion(TreeNode<K,V> root,
+                                                                 TreeNode<K,V> x) {
+            for (TreeNode<K,V> xp, xpl, xpr;;)  {
                 if (x == null || x == root)
                     return root;
                 else if ((xp = x.parent) == null) {
@@ -2283,7 +2311,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                     if (xpr == null)
                         x = xp;
                     else {
-                        SeasonHashMap.TreeNode<K,V> sl = xpr.left, sr = xpr.right;
+                        TreeNode<K,V> sl = xpr.left, sr = xpr.right;
                         if ((sr == null || !sr.red) &&
                                 (sl == null || !sl.red)) {
                             xpr.red = true;
@@ -2321,7 +2349,7 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
                     if (xpl == null)
                         x = xp;
                     else {
-                        SeasonHashMap.TreeNode<K,V> sl = xpl.left, sr = xpl.right;
+                        TreeNode<K,V> sl = xpl.left, sr = xpl.right;
                         if ((sl == null || !sl.red) &&
                                 (sr == null || !sr.red)) {
                             xpl.red = true;
@@ -2355,9 +2383,9 @@ public class SeasonHashMap<K,V> extends AbstractMapTemp<K,V>
         /**
          * Recursive invariant check
          */
-        static <K,V> boolean checkInvariants(SeasonHashMap.TreeNode<K,V> t) {
-            SeasonHashMap.TreeNode<K,V> tp = t.parent, tl = t.left, tr = t.right,
-                    tb = t.prev, tn = (SeasonHashMap.TreeNode<K,V>)t.next;
+        static <K,V> boolean checkInvariants(TreeNode<K,V> t) {
+            TreeNode<K,V> tp = t.parent, tl = t.left, tr = t.right,
+                    tb = t.prev, tn = (TreeNode<K,V>)t.next;
             if (tb != null && tb.next != t)
                 return false;
             if (tn != null && tn.prev != t)
