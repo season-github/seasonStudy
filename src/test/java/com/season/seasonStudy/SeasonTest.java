@@ -15,12 +15,8 @@ public class SeasonTest {
         SeasonHashMap<Integer,Integer> map = new SeasonHashMap<>();
         map.put(1, 11);
         map.put(2, 22);
-        Set<Integer> keys = map.keySet();
-        keys.size();
-        System.out.println(map.keySet().size());
-        map.put(3, 33);
-        System.out.println(map.keySet().size());
-        System.out.println(map.keySet());
+        map.values().remove(11);
+        System.out.println(map);
 
     }
 
