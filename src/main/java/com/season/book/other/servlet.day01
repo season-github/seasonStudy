@@ -1,0 +1,82 @@
+一 WEB应用的演变
+  1.演变的规律
+    由单击向网络演变
+    由CS向BS演变
+  2.CS和BS的区别
+    1）CS  Client Server
+       客户端服务端程序   客户端需要单独开发及安装
+    2）BS  Browser Server
+       浏览器服务器程序   用浏览器充当客户端，不必单独开发及安装
+二 Servlet
+  1.服务器如何保存并返回一个网页？
+    1）返回的是静态网页
+       --百科，新闻  任何人看到的内容都一样，没有差异
+         服务端保存一份HTML，并直接将它返回给浏览器
+    2）返回的是动态网页   
+       --微博，QQ空间，淘宝 每个人看到的内容有差异
+         服务器保存一个组件，由它根据用户需求动态拼一个网页
+         在Java中，这个组件叫做Servlet
+         组件：满足规范的对象
+  2.Servlet的特征
+    保存在服务器上
+    满足Sun的规范
+    它可以动态拼任何资源（网页，图片，文档）
+    术语：可以处理HTTP协议
+  3.什么是Servlet
+    是Sun推出的用于在服务器端处理HTTP协议的组件  
+三 服务器
+  1.名词：Java服务器 WEB服务器 Java WEB服务器  Servlet容器
+  2.本质：是一个软件，能够用来运行其他的软件，它和浏览器对等，是平级关系
+  3.举例：Tomcat(Apache)  JBOSS  WebLogic  WebSphere
+四 Tomcat的使用
+  1.单独使用（上线时）
+    1）配置JAVA_HOME:使用个人电脑的同学必须配置
+    2）下载并安装
+      从Apache官网下载  从doc.tedu.cn下载
+      直接解压缩（释放）就可以使用，是绿色版本
+    3）启动tomcat
+       Linux:打开/tomcat/bin,在终端输入./startup.sh
+             给目录增加访问权限： chmod +x *sh
+       Windows：打开/tomcat/bin,双击startup.bat
+    4）访问tomcat
+       打开浏览器并输入http://localhost.8080
+       回车后看到一只猫代表访问成功
+    5）关闭tomcat
+       Linux:打开/tomcat/bin,终端输入./shutdown.sh
+       windows:打开/tomcat/bin,双击shutdown.bat
+  2.用Eclipse来管理tomcat(开发时)(*)
+    1）操作步骤
+    参考文档:doc.tedu.cn/tomcat
+    2）配置失败时
+       (1)点击window->preference->server->runtime
+       (2)右侧选择tomcat,点击remove
+       (3)Eclipse左侧项目列表下选择Servers项目
+       (4)右键delete将此项目删除
+       (5)按照文档提示重新配置tomcat
+  3.容易出现的错误
+    1）报错信息
+       Address already in user,JVM_BIND:8080---端口冲突导致的错误
+    2）解决方案1
+       有可能是连续启动多次tomcat导致的端口冲突---打开tomcat/bin,强制shutdown即可
+    3）解决方案2  
+       有可能是其他软件（Oracle）占用了8080端口---修改tomcat端口，在server.xml第65行
+         修改完成后要重启tomcat,建议改为8088,8089
+       
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

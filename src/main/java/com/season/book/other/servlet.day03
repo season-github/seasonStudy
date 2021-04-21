@@ -1,0 +1,87 @@
+
+项目：查找+增加员工
+
+一 重定向项目   res.sendRedirect("findEmp");
+    采用重定向的方式访问查询功能，即告诉浏览器下一步可以访问查询功能
+    重定向是一种特殊的响应
+  1.重定向典型的使用场景 
+     解决互联网上2个不相关的网站之间的跳转问题
+  2.后续发展使用场景
+     解决同一项目内2个不相关组件之间的跳转问题
+  3.重定向的一般使用场景
+     增加，修改，删除之后要重定向到查询。
+二 路径
+    三部分  图片
+    我们所说的路径，都是指部署代码的访问路径
+  1.静态资源（HTML/CSS/JS/IMG等）的路径
+     就是该资源在tomcat内存放的位置
+  2.动态资源（Servlet)的路径
+     就是web.xml中配置的网名
+  应该将路径理解为网络上资源的名称
+  四种路径方法
+    System.out.println(req.getContextPath());--/servlet3
+    System.out.println(req.getServletPath());--/wer.duang
+    System.out.println(req.getRequestURI());--/servlet3/wer.duang
+    System.out.println(req.getRequestURL());--http://localhost:8080/servlet3/wer.duang
+
+三 如何配置Servlet访问路径
+  1.精确匹配（/findEmp)
+     只有这一个路径能够访问这个Servlet，即这个Servlet只能处理这一个请求
+  2.通配符（/*）
+     一切路径都能够访问这个Servlet，即这个Servlet能处理所有的请求
+  3.后缀（*.abc)
+     以abc为后缀的路径都可以访问这个Servlet,即这个Servlet能处理多个请求
+
+四 一个Servlet处理多个请求：
+  1.先写路径规范
+  2.根据规范判断及处理路径
+  3.配置文件（/*或*.x）
+  4.发出请求，写对应路径，满足或抛出异常
+五 通配符和后缀的区别
+    通配符：一个类处理所有请求，比较固定
+    后缀：一个类处理任意多个请求，比较灵活，后缀的方式更为灵活，建议使用 
+
+
+
+
+
+
+
+
+
+
+面试题：
+URI与RUL的区别
+1）狭义的理解
+   只在java项目内理解
+   URI:资源的绝对路径
+   URL：资源的完整路径
+   URL包含了URI
+2）广义的理解(*)
+   在所有的web项目内理解
+   URI：资源的名字
+   URL：资源的真名
+   URI包含了URL
+
+
+
+
+作业
+
+1.开发员工查询功能
+
+2.开发员工增加功能
+
+3.重构EmpManager,采用后缀的方式
+  配置路径,使用一个Servlet处理
+  所有的请求
+
+
+
+
+
+
+
+
+
+
