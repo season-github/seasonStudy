@@ -19,5 +19,24 @@ public class Test {
         spliterator.tryAdvance(System.out::println);
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

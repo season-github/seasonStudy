@@ -11,7 +11,7 @@ public class BatterComputerTest {
         System.out.println("mac computer:" + macComputer.toString());
 
         BatterComputerBuilder lenovoBuilder = new LenovoComputerBuilder("I7处理器", "海力士222");
-        director.makeComputer(lenovoBuilder);
+//        director.makeComputer(lenovoBuilder);
         BatterComputer lenovoComputer = lenovoBuilder.getComputer();
         System.out.println("lenovo computer:" + lenovoComputer.toString());
 
