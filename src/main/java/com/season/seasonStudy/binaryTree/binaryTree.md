@@ -27,6 +27,7 @@ DEFG不是双亲节点，没有孩子节点，也被称为叶子节点<br>
 <br>
 <br>
 <br>
+daemon
 <br>
 <br>
 <br>
@@ -44,6 +45,27 @@ b -> c
 c -> a
 ```
 
+
+### 二叉树-遍历
+前序遍历、中序遍历、后序遍历<br>
+前序遍历：root -> left -> right<br>
+中序遍历：left -> root -> right<br>
+后序遍历：left -> right-> root<br>
+通过上面的比较，你会发现，前中后序遍历的**前中后**其实指的就是**root/parent**的位置<br>
+而且，除了前序遍历外，都是从最左侧的子叶节点开始的<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 
 | 网站 | 用户名 | 密码 |

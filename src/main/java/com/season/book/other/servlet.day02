@@ -1,0 +1,125 @@
+浏览器访问服务器，要求服务器返回服务器时间---动态网页
+图1
+创建类TimeServlet继承HttpServlet重写service方法，然后将这个类配置到web.xml文件中（4步）
+web.xml文件十分重要,tomcat启动时首先会读取它,若它不存在或其内部含有任何错误，将导致tomcat
+加载项目失败(如果tomcat启动时报错，请检查web.xml）.
+配置过程:
+  1.声明Servlet类，并给它取个别名
+    <servlet>
+    <servlet-name>dundun</servlet-name>
+    <servlet-class>web.TimeServlet</servlet-class>
+    </servlet>
+  2.根据别名引用Servlet，给它取个网名,也叫做网络访问路径,
+      在网络上必须通过此名来访问一个Servlet，网名需以斜线开头.
+    <servlet-mapping>
+    <servlet-name>dundun</servlet-name>
+    <url-pattern>/cang</url-pattern>
+    </servlet-mapping>    
+ 
+
+查看：http:tomcathost:8080/servlet1/cang   
+      ---找到servlet1目录，并在此目录下找到web.xml，在此文件中找网名为
+        /cang的网名，通过此网名找到别名，通过别名找到类,调用其中的service()方法。
+报错信息404：找不到资源---访问路径与部署项目不同（项目名写错，网名写错）
+报错信息500：程序报错----类名写错，方法内部有误
+报错信息405：方法声明有误
+
+
+一 Servlet开发步骤
+  1.创建WEB项目
+   --WEB项目必须具备标准的WEB目录
+   /webapp/WEB-INF/web.xml
+  2.导入jar包
+    1）使用maven：在Maven下搜索javaee,在结果中选择javaee-api中的5
+    2）使用tomcat内置jar包：点击项目，右键Properties，弹出窗口左侧选择targeted runtimes 
+                            右侧勾选tomcat 点击apply
+  3.开发Servlet
+    创建一个类,一般叫XXXServlet，该类要继承于HttpServlet,间接实现Servlet接口,重写service(),在其内部给浏览器拼一个网页。  注：Servlet才是sun公司的规范.
+  4.配置Servlet
+     在web.xml中，按照规定配置
+  5.部署
+二 HTTP协议 
+  1.什么是HTTP协议？超文本传输协议,是由w3c(万维网)制定的一种应用层协议，
+     用来定义浏览器与web服务器之间如何通信（1）以及通信的数据格式（2）。
+  2.如何通信
+    建立连接  发送请求  接收响应  关闭连接
+    一次请求需要一次连接，尽量减少服务器压力
+  3.数据格式
+    1）请求数据包（浏览器向服务端发送的数据）
+      请求行：请求数据的基本信息
+     （协议类型req.getProtocol() 访问路径req.getServletPath() 请求方式req.getMethod()）
+      消息头：请求数据的描述信息
+      getHeaderNames()返回消息头中所有数据名称的迭代器，Enumeration是比较古老的迭代器
+        Enumeration e = req.getHeaderNames();
+		while(e.hasMoreElements()){
+			String name = (String)e.nextElement();
+			String value = req.getHeader(name);
+			System.out.println(name+":"+value);
+		}
+      实体内容：请求的具体数据
+    2）响应数据包：（服务端向浏览器发送的数据）
+      状态行：响应数据的基本信息
+      消息头：响应数据的描述信息
+        告诉浏览器发送的是什么格式的数据
+	res.setContentType("text/html");
+      实体内容：响应的具体数据
+        此处偷懒了，简化了很多代码
+        out.println("<p>"+now+"</p>");
+        
+        
+       
+  4.对开发的要求
+    1）不需要做的事情
+      浏览器向服务器发送数据已经由他们实现了
+      服务器向浏览器发送数据已经由他们实现了
+      浏览器发送的请求数据由浏览器自动组装
+      服务器发送的响应数据由服务器自动组装
+    2）需要做的事情
+      开发需要提供请求的具体数据
+      开发需要提供响应的具体数据
+      通过request处理请求数据，通过response处理响应数据
+
+
+
+
+获取请求参数：( 提交表单）
+  1.通过form的action属性声明表单提交的目标
+  （1.绝对路径格式:/项目名/访问路径 2.相对路径格式--写出当前网页和访问目标之间的相对关系）
+  2.通过name属性为框中的数据命名。
+  3.单选或多选要通过value属性设置一个值
+        //获取单个数据
+        req.getParameter(name);
+        //获取多个数据
+        req.getParameterValues(name);
+        
+三 请求方式
+  1.什么是请求方式
+    浏览器向服务器发送数据的方式
+    请求方式有好多种，要掌握两种：GET和POST
+    默认为get请求,若修改的话，在form表单  method = "post"
+  2.GET和POST的区别
+    1）GET：采用路径传参，参数在传递过程中可见，隐私性差，只能传递少量参数
+    2）POST：采用实体内容传参，参数在传递过程中不可见，隐私性好，传参没有限制
+  3.如何选择请求方式
+    默认所有的请求都是GET请求
+    通常查询时用GET，因为查询时只需要传少量的条件
+    通常保存时用POST，因为保存时需要传的参数较多
+请求时乱码解决方案
+ 1）get/post  
+   将String按照iso8859-1还原成byte,再将此byte按照utf-8转成String
+   优点：万能的。缺点：麻烦。
+ 2)get
+   修改tomcat配置文件
+   在server.xml第65行加URIEncoding = "utf-8"
+   优点：简单。缺点：只对get有效
+ 3）post
+   在接收参数前 req.setCharacterEncoding("utf-8")
+   声明实体内容的编码。优点：简单。缺点：只对post有效
+
+响应时乱码
+ res.setCharacterEncoding("utf-8")
+ res.setContentType("text.html;charset=utf-8")
+ 两处编码只需写一处  一般保留第二处
+
+
+
