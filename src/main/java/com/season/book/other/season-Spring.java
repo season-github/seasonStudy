@@ -1,4 +1,4 @@
-package com.season.book.other;2016年9月12日 00:11:27
+2016年9月12日 00:11:27
 
 今天开始复习springFrame
 
@@ -87,31 +87,6 @@ IOC	annotation
 		}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 简单实例
 	1.配置核心控制器DispatcherServlet在web.xml文件
 	<servlet>
@@ -151,22 +126,6 @@ IOC	annotation
 			<property name="suffix" value=".jsp"></property>        
 		</bean>
 	5编写显示视图index.jsp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

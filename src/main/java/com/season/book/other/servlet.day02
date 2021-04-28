@@ -121,5 +121,3 @@ web.xml文件十分重要,tomcat启动时首先会读取它,若它不存在或�
  res.setContentType("text.html;charset=utf-8")
  两处编码只需写一处  一般保留第二处
 
-
-

@@ -202,6 +202,7 @@ package com.season.book.other;Spring Web MVC
 		 RedirectView view = new RedirectView("../demo/form.form");
 		 return new ModelAndView(view);
 	         }
+
               }
 
  5.登录
