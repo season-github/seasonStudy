@@ -1,4 +1,4 @@
-package com.season.book.other;Spring Web MVC
+Spring Web MVC
 一 Sprintmvc
  1.Springmvc是什么
    是一个用来基于mvc架构的web开发框架，springmvc属于spring框架的一部分。

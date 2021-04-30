@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dao.DeanSubjectMapper">
+	<resultMap id="deanSubjectMap" type="com.season.book.framework.entity.DeanSubjectEntity">
+		<result property="subId" column="subId" /><!-- 科目ID --> 
+		<result property="subName" column="subName" /><!-- 科目名称 --> 
+		<result property="subDesc" column="subDesc" /><!-- 科目描述 --> 
+		<result property="gradeName" column="gradeName" /><!-- 年级名称 --> 
+		<result property="subjectClassify" column="subjectClassify" /><!-- 科目分类（0=文科，1=理科） --> 
+		<result property="delFlag" column="delFlag" /><!-- 删除标识(0:未删除,1:已删除) --> 
+	</resultMap>
+	
+	<!-- 基本引用sql -->
+	<sql id="sql_column_all">
+		subId,
+		subName,
+		subDesc,
+		gradeName,
+		subjectClassify,
+		delFlag
+	</sql>
+	
+	<!-- where查询语句 -->
+	<sql id="sql_where">
+		<if test="model.subId!=null and model.subId!='' ">and t.subId = #{model.subId}</if>
+		<if test="model.subName!=null and model.subName!='' ">and t.subName = #{model.subName}</if>
+		<if test="model.subDesc!=null and model.subDesc!='' ">and t.subDesc = #{model.subDesc}</if>
+		<if test="model.gradeName!=null and model.gradeName!='' ">and t.gradeName = #{model.gradeName}</if>
+		<if test="model.subjectClassify!=null ">and t.subjectClassify = #{model.subjectClassify}</if>
+		<if test="model.delFlag!=null ">and t.delFlag = #{model.delFlag}</if>
+	</sql>
+
+	<!-- 保存信息 -->
+	<insert id="save">
+		insert into dean_subject(
+		<trim suffixOverrides=",">
+					<if test="model.subId!=null and model.subId!='' ">subId,</if>
+					<if test="model.subName!=null and model.subName!='' ">subName,</if>
+					<if test="model.subDesc!=null and model.subDesc!='' ">subDesc,</if>
+					<if test="model.gradeName!=null and model.gradeName!='' ">gradeName,</if>
+					<if test="model.subjectClassify!=null ">subjectClassify,</if>
+					<if test="model.delFlag!=null ">delFlag,</if>
+		</trim>
+		)
+		values (
+		<trim suffixOverrides=",">
+					<if test="model.subId!=null and model.subId!='' ">#{model.subId},</if>
+					<if test="model.subName!=null and model.subName!='' ">#{model.subName},</if>
+					<if test="model.subDesc!=null and model.subDesc!='' ">#{model.subDesc},</if>
+					<if test="model.gradeName!=null and model.gradeName!='' ">#{model.gradeName},</if>
+					<if test="model.subjectClassify!=null ">#{model.subjectClassify},</if>
+					<if test="model.delFlag!=null ">#{model.delFlag},</if>
+		</trim>
+	   )
+	</insert>
+
+	<!-- 根据主键，逻辑删除 -->
+	<update id="removeByPk">
+		update 
+			dean_subject 
+		set
+			delFlag = 1
+		where
+			subId = #{primaryKey}
+	</update>
+
+	<!-- 更新信息 -->
+	<update id="update" >
+		update dean_subject t
+		<set>
+				<if test="model.subId!=null and model.subId!='' ">t.subId = #{model.subId},</if>
+				<if test="model.subName!=null and model.subName!='' ">t.subName = #{model.subName},</if>
+				<if test="model.subDesc!=null and model.subDesc!='' ">t.subDesc = #{model.subDesc},</if>
+				<if test="model.gradeName!=null and model.gradeName!='' ">t.gradeName = #{model.gradeName},</if>
+				<if test="model.subjectClassify!=null ">t.subjectClassify = #{model.subjectClassify},</if>
+				<if test="model.delFlag!=null ">t.delFlag = #{model.delFlag},</if>
+		</set>
+		where 
+			t.subId = #{model.subId}
+			and t.delFlag = 0
+	</update>
+
+	<!-- 查询-->
+	<select id="getByPk" resultMap="deanSubjectMap">
+		select 
+			<include refid="sql_column_all" />
+		from
+			dean_subject
+		<where>	
+			subId = #{primaryKey}
+		</where>
+	</select>
+
+	<!-- 根据条件查询一条数据 -->
+	<select id="getByModel" resultMap="deanSubjectMap">
+		select 
+			<include refid="sql_column_all" />
+		from 
+			dean_subject t
+		<where>	
+			<include refid="sql_where" />
+		</where>
+		order by t.modifiedDate desc
+	</select>
+	
+	<!-- 列表查询（多条数据） -->
+	<select id="list" resultMap="deanSubjectMap">
+		select 
+			<include refid="sql_column_all" />
+		from 
+			dean_subject t
+		<where>	
+			<include refid="sql_where" />
+		</where>
+		order by t.modifiedDate desc
+	</select>
+
+	<select id="count" resultType="int">
+		select
+			count(*)
+		from
+			dean_subject t
+	</select>
+	
+</mapper>

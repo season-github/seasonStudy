@@ -1,28 +1,4 @@
-package com.season.book.other;Spring框架  （软件半成品）  讲20天
-两个阶段
-  前8天   spring基础+mybatis+ajax
-          spring基础：
-                     spring容器   2天
-                     spring mvc   3天
-                     sring jdbc/mybatis  3天
-  后12天  spring应用（项目，扩展）
-
-spring容器
-一 spring 
-  spring的本质是管理软件中的对象，即创建对象和维护对象之间的关系
-  1.spring是什么？
-     开源的，轻量级的应用开发框架，目的是用于简化企业级应用程序开发，降低侵入性。
-     轻量级是相对于sun公司开发的ejb而言。
-  2.spring的特点
-     --简化开发 
-         spring对常用的一些api做了简化（比如，对jdbc做了简化，我们使用spring jdbc来访问数
-       据库，就不再需要考虑获取连接，关闭连接了），使代码更可靠。
-     --管理对象（解藕）
-        spring提供了一个容器，可以帮我们管理对象及对象之间的关系，这样一来，对象之间的耦合度
-       降低了，方便代码的维护。
-         IOC(控制反转)
-     --集成（一站式框架）
-          spring可以集成其他的一些框架（比如，可以集成用于任务调度的框架Quartz)
+)
  
 二 spring容器
   1.spring容器是什么？
@@ -316,30 +292,6 @@ spring容器
     @Value("#{db.driver}")
     private String driverName;
     注：@Value注解既可以用在属性前，也可以用在set方法前。另外，也可以使用该注解注入基本类型的值。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-练习：
-1.写一个java类（比如ManagerBean),为该类提供初始化方法与销毁方法，作用域要求为singleton,不使
-  用延迟加载。
-2.将Computer对象注入到Manager对象，要求使用set方法来注入。
-
-
-
-
 
 
 1.什么是JabaBean:一种简单规范的Java对象

@@ -491,7 +491,7 @@ select 语句的执行顺序:
 		2.减集 minus 以(7369,7499,7521)为准，去除(7566,7521)和前边重复的内容
 			select * from emp where empno in(7369,7499,7521) minus select * from emp where empno in(7566,7521);
 
-		3.交集 intersect 
+		3.交集
 			select * from emp where empno in(7369,7499,7521) intersect select *from emp where empno in(7566,7521);
 
 	2.列合并,联合查询
